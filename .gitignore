@@ -1,0 +1,24 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/front/node_modules
+/front/npm-debug.log*
+/front/yarn-error.log
+/front/yarn.lock
+/front/package-lock.json
+
+# production
+/front/dist
+
+# misc
+.DS_Store
+
+# umi
+/front/src/.umi
+/front/src/.umi-production
+/front/src/.umi-test
+/front/.env.local
+
+#pyc
+__pycache__
+*.pyc
