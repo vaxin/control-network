@@ -1,35 +1,33 @@
 import time
 import numpy as np
 
-DELAY = 1 # ms
+N_DELAY = 10 # s
 
 class Neuron():
-    def __init__(self):
+    def __init__(self, id):
+        self.id = id
         self.a = 0.0
-        self.input = 0.0 # direct input
-        self.ts = time.time()
+        self.time_queue = [0.0] * N_DELAY
+        self.extra = 0.0 # 可人工干预的输入
+        # self.ts = time.time()
         self.ups = set()
         self.downs = set()
 
     def connect(self, neuron):
-        neuron.ups.add(neuron)
+        neuron.ups.add(self)
         self.downs.add(neuron)
 
     def active(self):
-        self.input = 1.0
+        self.extra = 1.0
+
+    def deactive(self):
+        self.extra = 0.0
 
     def refresh(self):
-        if self.input > 0:
-            i = self.input
-            self.input = 0.0
-        else:
-            i = self.activation([ up.output() for up in self.ups ])
-
-        #print('refresh', i, self.a, self.ts, time.time(), time.time() - self.ts)
-        if self.a - 0.0 < 0.0001 and i > 0 or time.time() - self.ts > DELAY:
-            print('set a=', i)
-            self.a = i
-            self.ts = time.time()
+        x = [ up.output() for up in self.ups ] + [ self.extra ]
+        i = self.activation(x)
+        self.time_queue.append(i)
+        self.a = self.time_queue.pop(0)
         
     def output(self):
         return self.a
