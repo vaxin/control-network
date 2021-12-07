@@ -4,6 +4,13 @@ import numpy as np
 N_DELAY = 10 # s
 
 class Neuron():
+    neurons = set()
+
+    @staticmethod
+    def refresh_all():
+        for n in Neuron.neurons:
+            n.refresh()
+        
     def __init__(self, id):
         self.id = id
         self.a = 0.0
@@ -12,6 +19,7 @@ class Neuron():
         # self.ts = time.time()
         self.ups = set()
         self.downs = set()
+        Neuron.neurons.add(self)
 
     def connect(self, neuron):
         neuron.ups.add(self)
