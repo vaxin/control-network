@@ -61,6 +61,14 @@ while 1:
     for steer in steering:
         p.setJointMotorControl2(car, steer, p.POSITION_CONTROL, targetPosition=steeringAngle)
 
+    location, _ = p.getBasePositionAndOrientation(car)
+    p.resetDebugVisualizerCamera(
+        cameraDistance=3,
+        cameraYaw=110,
+        cameraPitch=-30,
+        cameraTargetPosition=location
+    )
+
     if useRealTimeSim == 0:
         p.stepSimulation()
 
