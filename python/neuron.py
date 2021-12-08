@@ -5,11 +5,22 @@ N_DELAY = 10 # s
 
 class Neuron():
     neurons = set()
+    connections = {}
+    cache = {}
+
+    @staticmethod
+    def get_neuron(id):
+        return Neuron.cache.get(id)
 
     @staticmethod
     def refresh_all():
         for n in Neuron.neurons:
             n.refresh()
+
+    @staticmethod
+    def print_network():
+        for key in Neuron.connections:
+            print(key)
         
     def __init__(self, id):
         self.id = id
@@ -20,13 +31,16 @@ class Neuron():
         self.ups = set()
         self.downs = set()
         Neuron.neurons.add(self)
+        Neuron.cache[id] = self
+        
 
     def connect(self, neuron):
         neuron.ups.add(self)
         self.downs.add(neuron)
+        Neuron.connections['->'.join([ str(self.id), str(neuron.id)])] = (self, neuron)
 
-    def active(self):
-        self.extra = 1.0
+    def active(self, a = 1.0):
+        self.extra = max(-1.0, min(1.0, a))
 
     def deactive(self):
         self.extra = 0.0
@@ -42,3 +56,5 @@ class Neuron():
 
     def activation(self, x):
         return min(max(-1.0, np.sum(x)), 1.0)
+
+    

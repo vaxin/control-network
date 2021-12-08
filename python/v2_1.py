@@ -3,29 +3,38 @@ from neuron import Neuron
 
 class World():
     def __init__(self):
-        self.build_network()        
-
-    def build_network(self):
         self.neurons = []
+        self.build_network()
+
+    def build_link(self, prefix, length):
         last_neuron = None
-        self.motion_neuron = Neuron(100)
-        for i in range(40):
-            n = Neuron(i)
+        motion_neuron = Neuron(prefix + length)
+        
+        for i in range(length):
+            n = Neuron(prefix + i)
+            n.connect(motion_neuron)
             self.neurons.append(n)
-            #n.connect(self.motion_neuron) # all neurons active motion neuron
             if last_neuron is not None:
                 last_neuron.connect(n)
             last_neuron = n
-        last_neuron.connect(self.motion_neuron)
+
+    def build_network(self):
+        self.build_link(100, 20)
+        self.build_link(200, 20)
+        self.build_link(300, 20)
 
     def refresh(self):
         Neuron.refresh_all()
     
     def show(self):
-        print("".join([ str(int(neuron.output())) for neuron in self.neurons ]) + ",motion=" + str(self.motion_neuron.output()), end="\r")
+        print("".join([ str(int(neuron.output())) for neuron in self.neurons ]), end="\r")
 
-    def get_motion_neuron_value(self):
-        return self.motion_neuron.output()
+    def get_neuron_value(self, id):
+        n = Neuron.get_neuron(id)
+        if n is not None:
+            return n.output()
+        return 0
+
 
 import _thread
 world = World()
@@ -38,23 +47,31 @@ def loop():
 def start_world():
     _thread.start_new_thread(loop, ())
 
-def start_act():
-    _thread.start_new_thread(rand_act, ())
-
 def start():
     start_world()
-    start_act()
 
-import random
-def rand_act():
-   count = 0
-   while count < 100:
-      time.sleep(2)
-      world.neurons[0].active()
-      time.sleep(0.5)
-      world.neurons[0].deactive()
-      count += 1
+cache = {}
+def __active(index, a, delay):
+    if abs(a) < 0.001:
+        return
+    
+    n = Neuron.get_neuron(index)
+    if n is None:
+        return
+
+    cache[index] = True
+    n.active(a)
+    time.sleep(delay)
+    n.deactive()
+    cache[index] = False
+
+def active(index, a, delay):
+     # 暂时避免重复刺激，否则会不停地创建线程
+    if cache.get(index, False) is True:
+        return
+
+    _thread.start_new_thread(__active, (index, a, delay))
 
 if __name__ == '__main__':
-    start_act()
-    loop()
+    start()
+    Neuron.print_network()

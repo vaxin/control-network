@@ -26,29 +26,37 @@ car = p.loadURDF("racecar/racecar.urdf")
 inactive_wheels = [3, 5, 7]
 wheels = [2]
 
-for wheel in inactive_wheels:
-    p.setJointMotorControl2(car, wheel, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
-
 # 转向轮
 steering = [4, 6]
 
+for wheel in inactive_wheels:
+    p.setJointMotorControl2(car, wheel, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
+
+
 # 自定义参数滑块，分别为速度，转向，驱动力
-targetVelocitySlider = p.addUserDebugParameter("wheelVelocity", -10, 10, 0)
-maxForceSlider = p.addUserDebugParameter("maxForce", 0, 10, 10)
-steeringSlider = p.addUserDebugParameter("steering", -0.5, 0.5, 0)
+vParam = p.addUserDebugParameter("force neuron", 0, 10, 10)
+leftParam = p.addUserDebugParameter("left steer neuron", 0, 10, 10)
+rightParam = p.addUserDebugParameter("right steer neuron", 0, 10, 10)
 
 nn.start()
 
 # 开始仿真
 while 1:
 	# 读取速度，转向角度，驱动力参数
-    maxForce = p.readUserDebugParameter(maxForceSlider)
-    #targetVelocity = p.readUserDebugParameter(targetVelocitySlider)
-    steeringAngle = p.readUserDebugParameter(steeringSlider)
-    targetVelocity = 10 * nn.world.get_motion_neuron_value()
-    #print('velocity=', targetVelocity)
+    v = p.readUserDebugParameter(vParam) / 10.
+    left = p.readUserDebugParameter(leftParam) / 10.
+    right = p.readUserDebugParameter(rightParam) / 10.
 
-    # print(targetVelocity)
+    nn.active(100, v, 1)
+    nn.active(200, left, 1)
+    nn.active(300, right, 1)
+
+    # 三个输出端，每个受一个神经元控制
+    targetVelocity = 10 * nn.world.get_neuron_value(120)
+    leftSteerAngle = 0.5 * nn.world.get_neuron_value(220)
+    rightSteerAngle = 0.5 * nn.world.get_neuron_value(320)
+
+    steeringAngle = leftSteerAngle - rightSteerAngle
     
 	# 根据上面读取到的值对关机进行设置
     for wheel in wheels:
@@ -56,7 +64,7 @@ while 1:
                                 wheel,
                                 p.VELOCITY_CONTROL,
                                 targetVelocity=targetVelocity,
-                                force=maxForce)
+                                force=10)
 
     for steer in steering:
         p.setJointMotorControl2(car, steer, p.POSITION_CONTROL, targetPosition=steeringAngle)
@@ -71,5 +79,6 @@ while 1:
 
     if useRealTimeSim == 0:
         p.stepSimulation()
+    time.sleep(1/240.)
 
 
